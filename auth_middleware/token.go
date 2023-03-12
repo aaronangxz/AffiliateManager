@@ -75,13 +75,13 @@ func CreateAuth(ctx context.Context, userId int64, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := orm.RedisInstance().Set(context.Background(), td.AccessUuid, strconv.Itoa(int(userId)), at.Sub(now)).Err()
+	errAccess := orm.RedisInstance().Set(ctx, td.AccessUuid, strconv.Itoa(int(userId)), at.Sub(now)).Err()
 	if errAccess != nil {
 		logger.Error(ctx, errAccess)
 		return errAccess
 	}
 	logger.Info(ctx, "Added to Redis: %v", td.AccessUuid)
-	errRefresh := orm.RedisInstance().Set(context.Background(), td.RefreshUuid, strconv.Itoa(int(userId)), rt.Sub(now)).Err()
+	errRefresh := orm.RedisInstance().Set(ctx, td.RefreshUuid, strconv.Itoa(int(userId)), rt.Sub(now)).Err()
 	if errRefresh != nil {
 		logger.Error(ctx, errRefresh)
 		return errRefresh
@@ -174,7 +174,7 @@ func ExtractTokenMetadata(ctx context.Context, r *http.Request) (*AccessDetails,
 
 // FetchAuth fetches the corresponding userid of an auth from cache
 func FetchAuth(ctx context.Context, authD *AccessDetails) (int64, error) {
-	userid, err := orm.RedisInstance().Get(context.Background(), authD.AccessUuid).Result()
+	userid, err := orm.RedisInstance().Get(ctx, authD.AccessUuid).Result()
 	if err != nil {
 		logger.ErrorMsg(ctx, "Error during FetchAuth: %v", err)
 		return 0, err
@@ -185,7 +185,7 @@ func FetchAuth(ctx context.Context, authD *AccessDetails) (int64, error) {
 }
 
 func DeleteAuth(ctx context.Context, givenUuid string) (int64, error) {
-	deleted, err := orm.RedisInstance().Del(context.Background(), givenUuid).Result()
+	deleted, err := orm.RedisInstance().Del(ctx, givenUuid).Result()
 	if err != nil {
 		logger.Error(ctx, err)
 		return 0, err
